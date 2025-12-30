@@ -171,12 +171,23 @@
         const {h, k, r, a, b, orient, p, porient} = params;
         let canonical = '', general = '', traces = [], info = '';
 
+        // Función auxiliar para marcadores premium
+        const addMarker = (x, y, label, color) => {
+            traces.push({
+                x: [x], y: [y], mode: 'markers+text', name: label,
+                text: [label], textposition: 'top center',
+                marker: { color: color, size: 10, line: {color: 'black', width: 1.5} },
+                textfont: { family: 'Open Sans', weight: 'bold', size: 10 }
+            });
+        };
+
         if (currentConic === 'circle') {
             canonical = `(x - ${h})² + (y - ${k})² = ${r*r}`;
             general = `x² + y² ${fmt(-2*h)}x ${fmt(-2*k)}y ${fmt(h*h + k*k - r*r)} = 0`;
             info = `<div class="data-badge">Radio<span>${r}</span></div><div class="data-badge">Excentricidad<span>0</span></div>`;
             let t = Array.from({length: 100}, (_, i) => i * 2 * Math.PI / 99);
-            traces.push({ x: t.map(v => h + r*Math.cos(v)), y: t.map(v => k + r*Math.sin(v)), name: 'Círculo', line: {color: 'black', width: 3} });
+            traces.push({ x: t.map(v => h + r*Math.cos(v)), y: t.map(v => k + r*Math.sin(v)), line: {color: 'black', width: 3} });
+            addMarker(h, k, 'C', '#FF4136');
         } 
         else if (currentConic === 'ellipse') {
             let c = Math.sqrt(Math.abs(a*a - b*b));
@@ -184,10 +195,15 @@
             if(orient === 'h') {
                 canonical = `(x-${h})²/${a*a} + (y-${k})²/${b*b} = 1`;
                 general = `${b*b}x² + ${a*a}y² ${fmt(-2*h*b*b)}x ${fmt(-2*k*a*a)}y ${fmt(h*h*b*b + k*k*a*a - a*a*b*b)} = 0`;
+                addMarker(h-c, k, 'F1', '#888'); addMarker(h+c, k, 'F2', '#888');
+                addMarker(h-a, k, 'V1', '#000'); addMarker(h+a, k, 'V2', '#000');
             } else {
                 canonical = `(x-${h})²/${b*b} + (y-${k})²/${a*a} = 1`;
                 general = `${a*a}x² + ${b*b}y² ${fmt(-2*h*a*a)}x ${fmt(-2*k*b*b)}y ${fmt(h*h*a*a + k*k*b*b - a*a*b*b)} = 0`;
+                addMarker(h, k-c, 'F1', '#888'); addMarker(h, k+c, 'F2', '#888');
+                addMarker(h, k-a, 'V1', '#000'); addMarker(h, k+a, 'V2', '#000');
             }
+            addMarker(h, k, 'C', '#FF4136');
             info = `<div class="data-badge">c (Focal)<span>${c.toFixed(2)}</span></div><div class="data-badge">e<span>${e.toFixed(2)}</span></div>`;
             let t = Array.from({length: 100}, (_, i) => i * 2 * Math.PI / 99);
             traces.push({ x: t.map(v => h + (orient==='h'?a:b)*Math.cos(v)), y: t.map(v => k + (orient==='h'?b:a)*Math.sin(v)), line: {color: 'black', width: 3} });
@@ -196,12 +212,17 @@
             if(porient === 'v') {
                 canonical = `(x - ${h})² = ${4*p}(y - ${k})`;
                 general = `x² ${fmt(-2*h)}x ${fmt(-4*p)}y ${fmt(h*h + 4*p*k)} = 0`;
+                addMarker(h, k+p, 'F', '#888');
+                traces.push({ x: [h-15, h+15], y: [k-p, k-p], mode: 'lines', name: 'Directriz', line: {dash: 'dash', color: '#FF4136', width: 2} });
             } else {
                 canonical = `(y - ${k})² = ${4*p}(x - ${h})`;
                 general = `y² ${fmt(-2*k)}y ${fmt(-4*p)}x ${fmt(k*k + 4*p*h)} = 0`;
+                addMarker(h+p, k, 'F', '#888');
+                traces.push({ x: [h-p, h-p], y: [k-15, k+15], mode: 'lines', name: 'Directriz', line: {dash: 'dash', color: '#FF4136', width: 2} });
             }
+            addMarker(h, k, 'V', '#000');
             info = `<div class="data-badge">Foco<span>${porient==='v'?(k+p).toFixed(1):(h+p).toFixed(1)}</span></div><div class="data-badge">e<span>1.00</span></div>`;
-            let t = Array.from({length: 100}, (_, i) => -10 + i*0.2);
+            let t = Array.from({length: 100}, (_, i) => -15 + i*0.3);
             let px = porient==='v' ? t.map(x => x+h) : t.map(y => (Math.pow(y, 2)/(4*p)) + h);
             let py = porient==='v' ? t.map(x => (Math.pow(x, 2)/(4*p)) + k) : t.map(y => y+k);
             traces.push({ x: px, y: py, line: {color: 'black', width: 3} });
@@ -209,19 +230,23 @@
         else if (currentConic === 'hyperbola') {
             let c = Math.sqrt(a*a + b*b);
             let e = c/a;
+            addMarker(h, k, 'C', '#FF4136');
             if(orient === 'h') {
                 canonical = `(x-${h})²/${a*a} - (y-${k})²/${b*b} = 1`;
                 general = `${b*b}x² - ${a*a}y² ${fmt(-2*h*b*b)}x ${fmt(2*k*a*a)}y ${fmt(h*h*b*b - k*k*a*a - a*a*b*b)} = 0`;
                 info = `<div class="data-badge">e<span>${e.toFixed(2)}</span></div><div class="data-badge">Asín.<span>y-k=±${(b/a).toFixed(2)}(x-h)</span></div>`;
-                // Asíntotas
-                traces.push({ x: [h-15, h+15], y: [k - (b/a)*15, k + (b/a)*15], line: {dash: 'dash', color: '#ccc', width: 1} });
-                traces.push({ x: [h-15, h+15], y: [k + (b/a)*15, k - (b/a)*15], line: {dash: 'dash', color: '#ccc', width: 1} });
+                addMarker(h-c, k, 'F1', '#888'); addMarker(h+c, k, 'F2', '#888');
+                addMarker(h-a, k, 'V1', '#000'); addMarker(h+a, k, 'V2', '#000');
+                traces.push({ x: [h-15, h+15], y: [k - (b/a)*15, k + (b/a)*15], line: {dash: 'dot', color: '#ccc', width: 1} });
+                traces.push({ x: [h-15, h+15], y: [k + (b/a)*15, k - (b/a)*15], line: {dash: 'dot', color: '#ccc', width: 1} });
             } else {
                 canonical = `(y-${k})²/${a*a} - (x-${h})²/${b*b} = 1`;
                 general = `${-a*a}x² + ${b*b}y² ${fmt(2*h*a*a)}x ${fmt(-2*k*b*b)}y ${fmt(-h*h*a*a + k*k*b*b - a*a*b*b)} = 0`;
                 info = `<div class="data-badge">e<span>${e.toFixed(2)}</span></div><div class="data-badge">Asín.<span>y-k=±${(a/b).toFixed(2)}(x-h)</span></div>`;
-                traces.push({ x: [h - (b/a)*15, h + (b/a)*15], y: [k-15, k+15], line: {dash: 'dash', color: '#ccc', width: 1} });
-                traces.push({ x: [h + (b/a)*15, h - (b/a)*15], y: [k-15, k+15], line: {dash: 'dash', color: '#ccc', width: 1} });
+                addMarker(h, k-c, 'F1', '#888'); addMarker(h, k+c, 'F2', '#888');
+                addMarker(h, k-a, 'V1', '#000'); addMarker(h, k+a, 'V2', '#000');
+                traces.push({ x: [h - (b/a)*15, h + (b/a)*15], y: [k-15, k+15], line: {dash: 'dot', color: '#ccc', width: 1} });
+                traces.push({ x: [h + (b/a)*15, h - (b/a)*15], y: [k-15, k+15], line: {dash: 'dot', color: '#ccc', width: 1} });
             }
             let t = Array.from({length: 100}, (_, i) => -3 + i*0.06);
             if(orient === 'h'){
@@ -238,9 +263,9 @@
         document.getElementById('data-panel').innerHTML = info;
 
         Plotly.newPlot('plot', traces, {
-            xaxis: { range: [h-15, h+15], zeroline: true, gridcolor: '#eee' },
-            yaxis: { range: [k-15, k+15], zeroline: true, gridcolor: '#eee', scaleanchor: "x" },
-            margin: { l: 20, r: 20, t: 20, b: 20 }, showlegend: false
+            xaxis: { range: [h-15, h+15], zeroline: true, gridcolor: '#eee', title: 'X' },
+            yaxis: { range: [k-15, k+15], zeroline: true, gridcolor: '#eee', scaleanchor: "x", title: 'Y' },
+            margin: { l: 40, r: 20, t: 20, b: 40 }, showlegend: false
         }, {responsive: true, displayModeBar: false});
     }
 
