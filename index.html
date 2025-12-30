@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cónicas PRO - √(Raiz) Cuadrada²</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Open+Sans:wght@400;600;700&display=swap');
+
+        body { 
+            background: white; font-family: 'Open Sans', sans-serif; 
+            display: flex; justify-content: center; padding: 20px; color: #333; margin: 0;
+        }
+
+        .calculadora-moderna {
+            max-width: 950px; width: 100%; padding: 40px;
+            background: #F2F2F2; border-radius: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        }
+
+        .header-section { text-align: center; margin-bottom: 25px; }
+        .header-section h1 { font-size: 26px; margin: 0; font-family: 'Playfair Display', serif; }
+        .header-section p { font-size: 18px; font-weight: 600; font-family: 'Playfair Display', serif; margin: 5px 0; }
+
+        /* PÍLDORA CUÁDRUPLE */
+        .pill-container { display: flex; justify-content: center; margin-bottom: 30px; }
+        .pill { background: #e0e0e0; border-radius: 50px; padding: 5px; display: flex; border: 1px solid #ccc; flex-wrap: wrap; justify-content: center; }
+        .pill-btn { 
+            border: none; padding: 10px 20px; border-radius: 40px; font-size: 12px; 
+            font-weight: 700; cursor: pointer; transition: 0.3s; background: transparent; color: #666; 
+        }
+        .pill-btn.active { background: white; color: black; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        /* CONTENEDOR DE CONTROLES */
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
+
+        .control-panel { background: white; border-radius: 25px; padding: 25px; border: 1px solid #ddd; }
+        .control-group { margin-bottom: 15px; }
+        .control-group label { display: block; font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+        
+        .inputs-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        input[type="number"], select { 
+            padding: 10px; border: 1px solid #ccc; border-radius: 15px; 
+            font-family: 'Open Sans'; font-size: 14px; width: 80px; text-align: center;
+        }
+
+        .formula-box { 
+            background: #f9f9f9; padding: 15px; border-radius: 20px; border-left: 4px solid black;
+            margin-top: 15px; font-family: 'Playfair Display', serif; font-size: 15px;
+        }
+        .formula-box b { color: #888; font-size: 11px; display: block; text-transform: uppercase; margin-bottom: 5px; }
+
+        /* GRÁFICA */
+        #graph-container { background: white; border-radius: 25px; border: 1px solid #ddd; height: 500px; position: relative; overflow: hidden; }
+        .watermark { position: absolute; bottom: 15px; right: 20px; font-family: 'Playfair Display', serif; font-weight: bold; font-size: 12px; color: #bbb; pointer-events: none; z-index: 10; }
+
+        .btn-black { 
+            background: black; color: white; border: none; padding: 12px 25px; 
+            border-radius: 30px; font-weight: 700; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 8px; margin: 15px auto 0;
+        }
+        .btn-download { background: white; color: black; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="calculadora-moderna">
+    <div class="header-section">
+        <h1>Calculadora de Cónicas</h1>
+        <p>√(Raiz) Cuadrada²</p>
+    </div>
+
+    <div class="pill-container">
+        <div class="pill">
+            <button class="pill-btn active" onclick="changeConic('circle', this)">Circunferencia</button>
+            <button class="pill-btn" onclick="changeConic('ellipse', this)">Elipse</button>
+            <button class="pill-btn" onclick="changeConic('parabola', this)">Parábola</button>
+            <button class="pill-btn" onclick="changeConic('hyperbola', this)">Hipérbola</button>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <div class="control-panel">
+            <div id="inputs-area">
+                </div>
+
+            <div class="formula-box">
+                <b>Ecuación Canónica</b>
+                <div id="eq-canonical">...</div>
+            </div>
+            <div class="formula-box">
+                <b>Ecuación General</b>
+                <div id="eq-general">...</div>
+            </div>
+        </div>
+
+        <div id="graph-container">
+            <div id="plot" style="width:100%; height:100%;"></div>
+            <div class="watermark">√(Raiz) Cuadrada²</div>
+        </div>
+    </div>
+
+    <button class="btn-black btn-download" onclick="downloadPNG()">
+        <img src="https://cdn-icons-png.flaticon.com/512/724/724933.png" width="16" alt="icon">
+        Descargar en PNG
+    </button>
+</div>
+
+<canvas id="export-canvas" style="display:none;"></canvas>
+
+<script>
+    let currentConic = 'circle';
+    const params = {
+        h: 0, k: 0, r: 5, // Círculo
+        a: 5, b: 3, orient: 'h', // Elipse / Hipérbola
+        p: 2, porient: 'v' // Parábola
+    };
+
+    function changeConic(type, btn) {
+        currentConic = type;
+        document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderInputs();
+        updateAll();
+    }
+
+    function renderInputs() {
+        const area = document.getElementById('inputs-area');
+        let html = '';
+
+        if (currentConic === 'circle') {
+            html = `
+                <div class="control-group"><label>Centro (h, k)</label>
+                    <div class="inputs-row">
+                        <input type="number" value="${params.h}" oninput="params.h=parseFloat(this.value);updateAll()">
+                        <input type="number" value="${params.k}" oninput="params.k=parseFloat(this.value);updateAll()">
+                    </div>
+                </div>
+                <div class="control-group"><label>Radio (r)</label>
+                    <input type="number" value="${params.r}" oninput="params.r=parseFloat(this.value);updateAll()">
+                </div>`;
+        } else if (currentConic === 'ellipse' || currentConic === 'hyperbola') {
+            html = `
+                <div class="control-group"><label>Centro (h, k)</label>
+                    <div class="inputs-row">
+                        <input type="number" value="${params.h}" oninput="params.h=parseFloat(this.value);updateAll()">
+                        <input type="number" value="${params.k}" oninput="params.k=parseFloat(this.value);updateAll()">
+                    </div>
+                </div>
+                <div class="control-group"><label>Semiejes (a, b)</label>
+                    <div class="inputs-row">
+                        <input type="number" value="${params.a}" oninput="params.a=parseFloat(this.value);updateAll()">
+                        <input type="number" value="${params.b}" oninput="params.b=parseFloat(this.value);updateAll()">
+                    </div>
+                </div>
+                <div class="control-group"><label>Orientación</label>
+                    <select onchange="params.orient=this.value;updateAll()">
+                        <option value="h">Horizontal</option>
+                        <option value="v">Vertical</option>
+                    </select>
+                </div>`;
+        } else if (currentConic === 'parabola') {
+            html = `
+                <div class="control-group"><label>Vértice (h, k)</label>
+                    <div class="inputs-row">
+                        <input type="number" value="${params.h}" oninput="params.h=parseFloat(this.value);updateAll()">
+                        <input type="number" value="${params.k}" oninput="params.k=parseFloat(this.value);updateAll()">
+                    </div>
+                </div>
+                <div class="control-group"><label>Parámetro (p)</label>
+                    <input type="number" value="${params.p}" oninput="params.p=parseFloat(this.value);updateAll()">
+                </div>
+                <div class="control-group"><label>Abre hacia</label>
+                    <select onchange="params.porient=this.value;updateAll()">
+                        <option value="v">Vertical (Y)</option>
+                        <option value="h">Horizontal (X)</option>
+                    </select>
+                </div>`;
+        }
+        area.innerHTML = html;
+    }
+
+    function updateAll() {
+        const {h, k, r, a, b, orient, p, porient} = params;
+        let canonical = '', general = '', traces = [];
+
+        if (currentConic === 'circle') {
+            canonical = `(x - ${h})² + (y - ${k})² = ${r*r}`;
+            let D = -2*h, E = -2*k, F = h*h + k*k - r*r;
+            general = `x² + y² ${fmt(D)}x ${fmt(E)}y ${fmt(F)} = 0`;
+            
+            let t = Array.from({length: 100}, (_, i) => i * 2 * Math.PI / 99);
+            traces.push({ x: t.map(v => h + r*Math.cos(v)), y: t.map(v => k + r*Math.sin(v)), name: 'Circunferencia', line: {color: 'black', width: 3} });
+            traces.push({ x: [h], y: [k], mode: 'markers', name: 'Centro', marker: {color: 'red', size: 8} });
+
+        } else if (currentConic === 'ellipse') {
+            let a2 = a*a, b2 = b*b;
+            let c = Math.sqrt(Math.abs(a2 - b2));
+            if(orient === 'h') {
+                canonical = `(x-${h})²/${a2} + (y-${k})²/${b2} = 1`;
+                general = `${b2}x² + ${a2}y² ${fmt(-2*h*b2)}x ${fmt(-2*k*a2)}y ${fmt(h*h*b2 + k*k*a2 - a2*b2)} = 0`;
+            } else {
+                canonical = `(x-${h})²/${b2} + (y-${k})²/${a2} = 1`;
+                general = `${a2}x² + ${b2}y² ${fmt(-2*h*a2)}x ${fmt(-2*k*b2)}y ${fmt(h*h*a2 + k*k*b2 - a2*b2)} = 0`;
+            }
+            let t = Array.from({length: 100}, (_, i) => i * 2 * Math.PI / 99);
+            let ex = t.map(v => h + (orient==='h'?a:b)*Math.cos(v));
+            let ey = t.map(v => k + (orient==='h'?b:a)*Math.sin(v));
+            traces.push({ x: ex, y: ey, name: 'Elipse', line: {color: 'black', width: 3} });
+            
+            // Focos
+            let fx = orient==='h' ? [h-c, h+c] : [h, h];
+            let fy = orient==='h' ? [k, k] : [k-c, k+c];
+            traces.push({ x: fx, y: fy, mode: 'markers', name: 'Focos', marker: {color: '#888', size: 6} });
+
+        } else if (currentConic === 'parabola') {
+            if(porient === 'v') {
+                canonical = `(x - ${h})² = ${4*p}(y - ${k})`;
+                general = `x² ${fmt(-2*h)}x ${fmt(-4*p)}y ${fmt(h*h + 4*p*k)} = 0`;
+                let px = Array.from({length: 100}, (_, i) => h - 10 + i*0.2);
+                let py = px.map(x => (Math.pow(x-h, 2)/(4*p)) + k);
+                traces.push({ x: px, y: py, name: 'Parábola', line: {color: 'black', width: 3} });
+                traces.push({ x: [h], y: [k+p], mode: 'markers', name: 'Foco', marker: {color: 'red'} });
+                traces.push({ x: [h-10, h+10], y: [k-p, k-p], mode: 'lines', name: 'Directriz', line: {dash: 'dash', color: '#888'} });
+            } else {
+                canonical = `(y - ${k})² = ${4*p}(x - ${h})`;
+                general = `y² ${fmt(-2*k)}y ${fmt(-4*p)}x ${fmt(k*k + 4*p*h)} = 0`;
+                let py = Array.from({length: 100}, (_, i) => k - 10 + i*0.2);
+                let px = py.map(y => (Math.pow(y-k, 2)/(4*p)) + h);
+                traces.push({ x: px, y: py, name: 'Parábola', line: {color: 'black', width: 3} });
+                traces.push({ x: [h+p], y: [k], mode: 'markers', name: 'Foco', marker: {color: 'red'} });
+                traces.push({ x: [h-p, h-p], y: [k-10, k+10], mode: 'lines', name: 'Directriz', line: {dash: 'dash', color: '#888'} });
+            }
+
+        } else if (currentConic === 'hyperbola') {
+            let a2 = a*a, b2 = b*b;
+            let c = Math.sqrt(a2 + b2);
+            canonical = orient==='h' ? `(x-${h})²/${a2} - (y-${k})²/${b2} = 1` : `(y-${k})²/${a2} - (x-${h})²/${b2} = 1`;
+            
+            let t = Array.from({length: 100}, (_, i) => -2 + i*0.04);
+            if(orient === 'h') {
+                traces.push({ x: t.map(v => h + a*Math.cosh(v)), y: t.map(v => k + b*Math.sinh(v)), line: {color: 'black'}, showlegend: false });
+                traces.push({ x: t.map(v => h - a*Math.cosh(v)), y: t.map(v => k + b*Math.sinh(v)), line: {color: 'black'}, name: 'Hipérbola' });
+                traces.push({ x: [h-c, h+c], y: [k, k], mode: 'markers', name: 'Focos' });
+            } else {
+                traces.push({ y: t.map(v => k + a*Math.cosh(v)), x: t.map(v => h + b*Math.sinh(v)), line: {color: 'black'}, showlegend: false });
+                traces.push({ y: t.map(v => k - a*Math.cosh(v)), x: t.map(v => h + b*Math.sinh(v)), line: {color: 'black'}, name: 'Hipérbola' });
+                traces.push({ x: [h, h], y: [k-c, k+c], mode: 'markers', name: 'Focos' });
+            }
+        }
+
+        document.getElementById('eq-canonical').innerText = canonical;
+        document.getElementById('eq-general').innerText = general;
+
+        Plotly.newPlot('plot', traces, {
+            xaxis: { range: [h-15, h+15], zeroline: true, gridcolor: '#eee' },
+            yaxis: { range: [k-15, k+15], zeroline: true, gridcolor: '#eee', scaleanchor: "x" },
+            margin: { l: 20, r: 20, t: 20, b: 20 },
+            showlegend: false
+        }, {responsive: true, displayModeBar: false});
+    }
+
+    function fmt(num) {
+        if (num === 0) return "";
+        return num > 0 ? "+ " + num.toFixed(1) : "- " + Math.abs(num).toFixed(1);
+    }
+
+    async function downloadPNG() {
+        const gd = document.getElementById('plot');
+        const imgData = await Plotly.toImage(gd, { format: 'png', width: 1000, height: 800 });
+        
+        const canvas = document.getElementById('export-canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = function() {
+            canvas.width = 1000; canvas.height = 800;
+            ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            
+            ctx.font = "bold 24px 'Playfair Display'";
+            ctx.fillStyle = "rgba(100, 100, 100, 0.6)";
+            ctx.textAlign = "right";
+            ctx.fillText("√(Raiz) Cuadrada²", canvas.width - 40, canvas.height - 40);
+            
+            const link = document.createElement('a');
+            link.download = `Conica-RaizCuadrada-${currentConic}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+        img.src = imgData;
+    }
+
+    renderInputs();
+    updateAll();
+</script>
+</body>
+</html>
