@@ -13,10 +13,55 @@
         .header-section { text-align: center; margin-bottom: 25px; }
         .header-section h1 { font-size: 26px; margin: 0; font-family: 'Playfair Display', serif; }
         
-        .pill-container { display: flex; justify-content: center; margin-bottom: 30px; }
-        .pill { background: #e0e0e0; border-radius: 50px; padding: 5px; display: flex; gap: 5px; border: 1px solid #ccc; }
-        .pill-btn { border: none; padding: 10px 20px; border-radius: 40px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; background: transparent; color: #666;  }
-        .pill-btn.active { background: white; color: black; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+       .pill-container { 
+    display: flex; 
+    justify-content: center; 
+    margin-bottom: 30px; 
+    /* Asegura que el contenedor no fuerce un ancho mayor al de la pantalla */
+    width: 100%;
+    overflow: hidden;
+}
+
+.pill { 
+    background: #e0e0e0; 
+    border-radius: 50px; 
+    padding: 5px; 
+    display: flex; 
+    gap: 5px; 
+    border: 1px solid #ccc;
+    /* Optimización para celulares: scroll horizontal solo si es necesario */
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none; /* Oculta scroll en Firefox */
+    -ms-overflow-style: none; /* Oculta scroll en IE/Edge */
+    -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+}
+
+/* Oculta la barra de scroll en Chrome, Safari y Opera */
+.pill::-webkit-scrollbar {
+    display: none;
+}
+
+.pill-btn { 
+    border: none; 
+    padding: 10px 20px; 
+    border-radius: 40px; 
+    font-size: 12px; 
+    font-weight: 700; 
+    cursor: pointer; 
+    transition: 0.3s; 
+    background: transparent; 
+    color: #666;
+    /* Evita que los botones se encojan para caber, forzando el scroll */
+    flex-shrink: 0; 
+}
+
+.pill-btn.active { 
+    background: white; 
+    color: black; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+}
 
       /* Móvil: Una sola columna, orden natural (Controles -> Gráfica -> Parámetros) */
 .main-grid {
@@ -62,7 +107,7 @@
         
         /* Estilos Matemáticos */
         .math-render { font-family: 'STIX Two Text', serif; font-size: 20px; display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; }
-        .math-input { border-bottom: 2px solid #007AFF; color: #007AFF; outline: none; padding: 0 4px; min-width: 15px; display: inline-block; transition: 0.2s; }
+        .math-input { border-bottom: 2px solid #ccc; color: #007AFF; outline: none; padding: 0px; min-width: 15px; display: inline-block; transition: 0.2s; }
         .math-input:focus { background: rgba(0, 122, 255, 0.05); }
         .fraction { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 5px; }
         .frac-num { border-bottom: 1.5px solid #333; padding: 0 10px; }
@@ -127,7 +172,7 @@
     color: #000;
 }
 .param-value.editable {
-    border-bottom: 1.5px solid #007AFF;
+    border-bottom: 2px solid #ccc;
     color: #007AFF;
     outline: none;
     cursor: text;
